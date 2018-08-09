@@ -1,0 +1,22 @@
+#ifndef _RUN_H
+#define _RUN_H
+
+#include <pthread.h>
+#include <stdlib.h>
+
+// run_function
+// ---
+// Should begin some thread executing start_function 
+// concurrently with the thread it is called from. 
+//
+// start_function: whatever function should begin executing
+// args: a pointer to the arguments start_function will take.
+//
+void run_function(void*(*start_function)(void *), void *args)
+{
+    pthread_t thread;
+    pthread_create(&thread, NULL, start_function, args);
+    pthread_detach(thread);
+}
+
+#endif
