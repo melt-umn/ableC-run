@@ -5,7 +5,6 @@ imports edu:umn:cs:melt:ableC:abstractsyntax:construction;
 imports edu:umn:cs:melt:ableC:abstractsyntax:construction:parsing;
 imports edu:umn:cs:melt:ableC:abstractsyntax:substitution;
 imports edu:umn:cs:melt:ableC:abstractsyntax:env;
-imports edu:umn:cs:melt:exts:ableC:templating:abstractsyntax as tmp;
 
 imports silver:langutil;
 imports silver:langutil:pp;
