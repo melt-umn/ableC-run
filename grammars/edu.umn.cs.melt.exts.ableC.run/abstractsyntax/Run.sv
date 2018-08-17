@@ -11,6 +11,26 @@ imports silver:langutil:pp;
 
 global builtin :: Location = builtinLoc("edu:umn:cs:melt:exts:ableC:run:abstractsyntax");
 
+function checkFunctionArgs
+[Message] ::= origFunc::Expr in_types::[Type] args::[Expr] argNo::Integer e::Decorated Env
+{
+  local h_args::Expr = head(args);
+  h_args.returnType = h_args.returnType;
+  h_args.env = e;
+
+  return 
+  if null(in_types) && null(args)
+    then []
+  else if compatibleTypes(head(in_types), 
+          h_args.typerep, false, true)
+    then checkFunctionArgs(origFunc, tail(in_types), tail(args), argNo + 1, e)
+  else [err(origFunc.location,
+       " argument " ++ toString(argNo) ++ " of " ++ show(80,origFunc.pp) ++
+       " expected type " ++ showType(head(in_types)) ++ " (got " ++ 
+       showType(h_args.typerep) ++ ")")]
+       ++ checkFunctionArgs(origFunc, tail(in_types), tail(args), argNo + 1, e);
+}
+
 -- spawn a function on its own thread 
 abstract production run
 top::Stmt ::= origFunc::Expr  argList::[Expr]
@@ -23,6 +43,24 @@ top::Stmt ::= origFunc::Expr  argList::[Expr]
   local id::String = toString(genInt()); 
   local argStructName::String = s"_run_arg_${id}_s";
   local funName::String = s"_run_fn_${id}";
+
+  top.errors := origFunc.errors ++ 
+  case origFunc.typerep of
+    functionType(out_type, protoFunctionType(in_types, false), _) ->
+      case out_type of
+        builtinType(nilQualifier(), voidType()) -> 
+          if length(in_types) == length(argList) 
+          then checkFunctionArgs(origFunc, in_types, argList, 1, openScopeEnv(top.env))
+          else [err(origFunc.location, show(80, origFunc.pp) ++ " expected " ++
+               toString(length(in_types)) ++ " arguments, got "
+               ++ toString(length(argList)))]
+      | _ -> [err(origFunc.location,
+             "function used with run must have return type void, not " ++
+             showType(out_type))]
+      end
+  | _ -> [err(origFunc.location, "run must be used with a function, not " ++
+          showType(origFunc.typerep))]
+  end;
   
   local argStructDcl::Decl =
     typeExprDecl(nilAttribute(),
